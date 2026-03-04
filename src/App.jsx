@@ -2,11 +2,11 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 
 import './index.css';
 
-createRoot(document.getElementById('root')).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-)
+// createRoot(document.getElementById('root')).render(
+//   <StrictMode>
+//     <App />
+//   </StrictMode>,
+// )
 
 // --- Seeded RNG (Mulberry32) ---
 function mulberry32(seed) {
