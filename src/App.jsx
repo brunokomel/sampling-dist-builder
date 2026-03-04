@@ -838,7 +838,7 @@ function PlotCard({ title, subtitle, children }) {
       </div>
       <div
         style={{
-          fontSize: 11,
+          fontSize: 12,
           color: '#64748b',
           marginBottom: 6,
           minHeight: 12,
