@@ -478,7 +478,7 @@ export default function CLTVisualizer() {
           }}
         >
           {/* Plot 1: Population */}
-          <PlotCard title="① Population" subtitle="Exponential(λ=1)">
+          <PlotCard title="① Population">
             <svg width={W} height={H}>
               {popHist.map((b, i) => {
                 const x = scaleX(b.x0, popXMin, popXMax, W, padL);
@@ -828,7 +828,7 @@ function PlotCard({ title, subtitle, children }) {
     >
       <div
         style={{
-          fontSize: 14,
+          fontSize: 18,
           fontWeight: 700,
           color: '#f1f5f9',
           marginBottom: 1,
@@ -838,7 +838,7 @@ function PlotCard({ title, subtitle, children }) {
       </div>
       <div
         style={{
-          fontSize: 11,
+          fontSize: 14,
           color: '#64748b',
           marginBottom: 6,
           minHeight: 12,
