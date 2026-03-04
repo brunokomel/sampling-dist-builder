@@ -651,10 +651,10 @@ export default function CLTVisualizer() {
 
           {/* Plot 3: Sampling Distribution */}
           <PlotCard
-            title="③ Sampling Distribution"
+            title="③ Sampling Distribution of Means"
             subtitle={
               t > 0
-                ? `${t} means stacked · Gold = newest`
+                ? `${t} means stacked · Gold = Newest Sample Mean`
                 : 'Means will stack here'
             }
           >
