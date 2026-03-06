@@ -120,16 +120,16 @@ export default function CLTVisualizer() {
   const simRef = useRef(null);
 
   const theme = {
-    bg:       darkMode ? '#1C2739' : '#f0f4f8',
-    panel:    darkMode ? '#0f172a' : '#ffffff',
-    controls: darkMode ? '#1e293b' : '#e2e8f0',
-    border:   darkMode ? '#334155' : '#cbd5e1',
-    text:     darkMode ? '#e2e8f0' : '#1e293b',
-    subtext:  darkMode ? '#64748b' : '#64748b',
-    axis:     darkMode ? '#475569' : '#94a3b8',
-    tick:     darkMode ? '#94a3b8' : '#475569',
-    popBar:   darkMode ? '#334155' : '#94a3b8',
-    select:   darkMode ? '#334155' : '#ffffff',
+    bg:        darkMode ? '#1C2739' : '#f0f4f8',
+    panel:     darkMode ? '#0f172a' : '#ffffff',
+    controls:  darkMode ? '#1e293b' : '#e2e8f0',
+    border:    darkMode ? '#334155' : '#cbd5e1',
+    text:      darkMode ? '#e2e8f0' : '#1e293b',
+    subtext:   darkMode ? '#64748b' : '#64748b',
+    axis:      darkMode ? '#475569' : '#94a3b8',
+    tick:      darkMode ? '#94a3b8' : '#475569',
+    popBar:    darkMode ? '#334155' : '#94a3b8',
+    select:    darkMode ? '#334155' : '#ffffff',
     sampleBar: darkMode ? '#94a3b8' : '#475569',
   };
 
@@ -172,9 +172,11 @@ export default function CLTVisualizer() {
 
   const sim = simRef.current;
 
-  const W = 340, H = 280;
+  // Layout — W for plots 1 & 2, W3 for the wider plot 3
+  const W = 340, H = 280, W3 = 340;
   const padL = 36, padR = 10, padT = 28, padB = 36;
   const innerW = W - padL - padR;
+  const innerW3 = W3 - padL - padR;
   const innerH = H - padT - padB;
 
   const popHist = useMemo(
@@ -202,22 +204,23 @@ export default function CLTVisualizer() {
   const maxStack = stackedAll.length ? Math.max(...stackedAll.map((d) => d.stack)) : 1;
   const newest = stackedAll[stackedAll.length - 1];
   const tileH3 = (innerH - 10) / (maxStack + 2);
-  const tileW3 = Math.max(3, (innerW / binsMeans) * 0.88);
+  const tileW3 = Math.max(3, (innerW3 / binsMeans) * 0.88);
 
   function pickRandom() {
     if (stackedAll.length === 0) return;
     setHighlightedIdx(Math.floor(Math.random() * stackedAll.length));
   }
 
-  function renderAxes(xMin, xMax, yMax) {
+  // renderAxes accepts an optional width parameter (defaults to W)
+  function renderAxes(xMin, xMax, yMax, w = W) {
     const ticks = 5;
     return (
       <>
-        <line x1={padL} y1={H - padB} x2={W - padR} y2={H - padB} stroke={theme.axis} strokeWidth={1} />
+        <line x1={padL} y1={H - padB} x2={w - padR} y2={H - padB} stroke={theme.axis} strokeWidth={1} />
         <line x1={padL} y1={padT} x2={padL} y2={H - padB} stroke={theme.axis} strokeWidth={1} />
         {Array.from({ length: ticks + 1 }, (_, i) => {
           const v = xMin + (i / ticks) * (xMax - xMin);
-          const px = scaleX(v, xMin, xMax, W, padL);
+          const px = scaleX(v, xMin, xMax, w, padL);
           return (
             <g key={i}>
               <line x1={px} y1={H - padB} x2={px} y2={H - padB + 4} stroke={theme.axis} strokeWidth={1} />
@@ -337,10 +340,10 @@ export default function CLTVisualizer() {
         </div>
 
         {/* Three plots */}
-        <div style={{ flex: 1, display: 'flex', gap: 12, alignItems: 'flex-start', minWidth: 0 }}>
+        <div style={{ flex: 1, display: 'flex', gap: 12, alignItems: 'stretch', minWidth: 0 }}>
 
           {/* Plot 1: Population */}
-          <PlotCard title="① Population" subtitle={distType.charAt(0).toUpperCase() + distType.slice(1)} theme={theme}>
+          <PlotCard title="① Population" subtitle={distType.charAt(0).toUpperCase() + distType.slice(1)} theme={theme} flex={1}>
             <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="auto">
               <defs>
                 <clipPath id="clip1">
@@ -355,7 +358,7 @@ export default function CLTVisualizer() {
                   return <rect key={i} x={x + 0.5} y={y} width={Math.max(1, x2 - x - 1)} height={H - padB - y} fill={theme.popBar} opacity={0.9} />;
                 })}
               </g>
-              {renderAxes(popXMin, popXMax, popDensityMax)}
+              {renderAxes(popXMin, popXMax, popDensityMax, W)}
               <text x={W / 2} y={H - 4} textAnchor="middle" fontSize={9} fill={theme.subtext}>Y</text>
               <text x={12} y={H / 2} textAnchor="middle" fontSize={9} fill={theme.subtext} transform={`rotate(-90,12,${H / 2})`}>Density</text>
             </svg>
@@ -366,6 +369,7 @@ export default function CLTVisualizer() {
             title="② One Sample Draw"
             subtitle={t > 0 ? `Sample #${t} · n=${n} · mean=${sampleMean?.toFixed(3)}` : 'Press Play or Step'}
             theme={theme}
+            flex={1}
           >
             <svg ref={plot2Ref} viewBox={`0 0 ${W} ${H}`} width="100%" height="auto" style={{ overflow: 'visible' }}>
               <defs>
@@ -390,7 +394,7 @@ export default function CLTVisualizer() {
                   return <rect key={i} x={x + 0.5} y={y} width={Math.max(1, x2 - x - 1)} height={H - padB - y} fill={theme.sampleBar} opacity={0.8} />;
                 })}
               </g>
-              {renderAxes(popXMin, popXMax, popDensityMax)}
+              {renderAxes(popXMin, popXMax, popDensityMax, W)}
               {sampleMean != null && (
                 <>
                   <line
@@ -420,24 +424,24 @@ export default function CLTVisualizer() {
             </svg>
           </PlotCard>
 
-          {/* Plot 3: Sampling Distribution */}
+          {/* Plot 3: Sampling Distribution — wider flex, wider viewBox */}
           <PlotCard
             flex={1.5}
             title="③ Sampling Distribution"
             subtitle={t > 0 ? `${t} means stacked · Gold = Newest` : 'Means will stack here'}
             theme={theme}
           >
-            <svg ref={plot3Ref} viewBox={`0 0 ${W} ${H}`} width="100%" height="auto" style={{ overflow: 'visible' }}>
+            <svg ref={plot3Ref} viewBox={`0 0 ${W3} ${H}`} width="100%" height="auto" style={{ overflow: 'visible' }}>
               <defs>
                 <clipPath id="clip3">
-                  <rect x={padL} y={padT} width={innerW} height={innerH} />
+                  <rect x={padL} y={padT} width={innerW3} height={innerH} />
                 </clipPath>
               </defs>
               <g clipPath="url(#clip3)">
                 {stackedAll.map((d, i) => {
                   const isNewest = i === stackedAll.length - 1;
                   const isHighlighted = i === highlightedIdx;
-                  const px = scaleX(d.x, meansXMin, meansXMax, W, padL);
+                  const px = scaleX(d.x, meansXMin, meansXMax, W3, padL);
                   const py = padT + innerH - d.stack * tileH3 + tileH3 * 0.08;
                   return (
                     <rect
@@ -451,8 +455,8 @@ export default function CLTVisualizer() {
                   );
                 })}
               </g>
-              {renderAxes(meansXMin, meansXMax, maxStack + 1)}
-              <text x={W / 2} y={H - 4} textAnchor="middle" fontSize={9} fill={theme.subtext}>Sample Mean</text>
+              {renderAxes(meansXMin, meansXMax, maxStack + 1, W3)}
+              <text x={W3 / 2} y={H - 4} textAnchor="middle" fontSize={9} fill={theme.subtext}>Sample Mean</text>
             </svg>
           </PlotCard>
         </div>
@@ -466,7 +470,7 @@ export default function CLTVisualizer() {
         if (!r2 || !r3) return null;
 
         const scaleFactorX2 = r2.width / W;
-        const scaleFactorX3 = r3.width / W;
+        const scaleFactorX3 = r3.width / W3;
         const scaleFactorY2 = r2.height / H;
         const scaleFactorY3 = r3.height / H;
 
@@ -474,8 +478,8 @@ export default function CLTVisualizer() {
         const srcY = r2.top + (padT + 4) * scaleFactorY2;
 
         const dstX = newest
-          ? r3.left + scaleX(newest.x, meansXMin, meansXMax, W, padL) * scaleFactorX3 - (tileW3 * scaleFactorX3) / 2
-          : r3.left + (W / 2) * scaleFactorX3;
+          ? r3.left + scaleX(newest.x, meansXMin, meansXMax, W3, padL) * scaleFactorX3 - (tileW3 * scaleFactorX3) / 2
+          : r3.left + (W3 / 2) * scaleFactorX3;
         const dstY = newest
           ? r3.top + (padT + innerH - newest.stack * tileH3 + tileH3 * 0.08) * scaleFactorY3
           : r3.top + (H / 2) * scaleFactorY3;
@@ -488,7 +492,7 @@ export default function CLTVisualizer() {
         return (
           <div style={{
             position: 'fixed', left, top,
-            width: Math.max(10, tileW3 * (r3.width / W)),
+            width: Math.max(10, tileW3 * scaleFactorX3),
             height: 14,
             background: GOLD, border: `1px solid ${GOLD_DARK}`,
             borderRadius: 2, pointerEvents: 'none', zIndex: 999,
