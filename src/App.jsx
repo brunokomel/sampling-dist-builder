@@ -559,12 +559,11 @@ export default function CLTVisualizer() {
             display: 'flex',
             gap: 12,
             alignItems: 'flex-start',
-            overflowX: 'auto',
           }}
         >
           {/* Plot 1: Population */}
           <PlotCard title="① Population">
-            <svg width={W} height={H}>
+            <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="auto">
               {popHist.map((b, i) => {
                 const x = scaleX(b.x0, popXMin, popXMax, W, padL);
                 const x2 = scaleX(b.x1, popXMin, popXMax, W, padL);
@@ -616,8 +615,9 @@ export default function CLTVisualizer() {
           >
             <svg
               ref={plot2Ref}
-              width={W}
-              height={H}
+              viewBox={`0 0 ${W} ${H}`}
+              width="100%"
+              height="auto"
               style={{ overflow: 'visible' }}
             >
               {/* Pop density background */}
@@ -745,8 +745,9 @@ export default function CLTVisualizer() {
           >
             <svg
               ref={plot3Ref}
-              width={W}
-              height={H}
+              viewBox={`0 0 ${W} ${H}`}
+              width="100%"
+              height="auto"
               style={{ overflow: 'visible' }}
             >
               {stackedAll.map((d, i) => {
@@ -904,14 +905,12 @@ function PlotCard({ title, subtitle, children }) {
   return (
     <div
       style={{
-        width: 340, 
-        flexShrink: 0, 
-        // flex: 1,
+        flex: 1,
+        minWidth: 0,
         background: '#0f172a',
         border: '1px solid #1e293b',
         borderRadius: 8,
         padding: '10px 8px 6px',
-        minWidth: 0,
       }}
     >
       <div
