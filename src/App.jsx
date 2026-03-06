@@ -249,16 +249,16 @@ export default function CLTVisualizer() {
       {/* Dark/Light mode toggle — top right */}
       <button
         onClick={() => setDarkMode(d => !d)}
+        className="theme-toggle"
         style={{
           position: 'absolute', top: 20, right: 20,
-          padding: '6px 14px', fontSize: 11, cursor: 'pointer',
-          background: darkMode ? '#334155' : '#cbd5e1',
-          color: theme.text, border: `1px solid ${theme.border}`,
-          borderRadius: 6, fontFamily: "'Courier New', monospace",
-          fontWeight: 600, zIndex: 10,
+          background: darkMode ? theme.controls : theme.bg,
+          borderColor: theme.border,
+          color: theme.subtext,
+          zIndex: 10,
         }}
       >
-        {darkMode ? '☀️ Light Mode' : '🌙 Dark Mode'}
+        {darkMode ? '☀ Light' : '☾ Dark'}
       </button>
 
       {/* Title */}
