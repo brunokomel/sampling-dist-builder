@@ -426,7 +426,7 @@ export default function CLTVisualizer() {
 
           {/* Plot 3: Sampling Distribution — wider flex, wider viewBox */}
           <PlotCard
-            flex={1.5}
+            flex={1}
             title="③ Sampling Distribution"
             subtitle={t > 0 ? `${t} means stacked · Gold = Newest` : 'Means will stack here'}
             theme={theme}
