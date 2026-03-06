@@ -75,13 +75,6 @@ function scaleY(val, yMax, height, padT, padB) {
   return padT + (1 - val / yMax) * (height - padT - padB);
 }
 
-// --- Random Sample Mean
-function pickRandom() {
-  if (stackedAll.length === 0) return;
-  const idx = Math.floor(Math.random() * stackedAll.length);
-  setHighlightedIdx(idx);
-}
-
 const POP_COLOR = '#334155';
 const SAMPLE_COLOR = '#94a3b8';
 const GOLD = '#f59e0b';
@@ -97,6 +90,12 @@ export default function CLTVisualizer() {
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState(350);
   const [highlightedIdx, setHighlightedIdx] = useState(null);
+
+  function pickRandom() {
+    if (stackedAll.length === 0) return;
+    const idx = Math.floor(Math.random() * stackedAll.length);
+    setHighlightedIdx(idx);
+  }
 
   // Animation state for the "drop" token
   const [tokenAnim, setTokenAnim] = useState(null); // {phase: 'compress'|'fly'|'drop'|null, ...}
@@ -684,6 +683,7 @@ export default function CLTVisualizer() {
             >
               {stackedAll.map((d, i) => {
                 const isNewest = i === stackedAll.length - 1;
+                const isHighlighted = i === highlightedIdx;
                 const px = scaleX(d.x, meansXMin, meansXMax, W, padL);
                 const py = padT + innerH - d.stack * tileH3 + tileH3 * 0.08;
                 return (
