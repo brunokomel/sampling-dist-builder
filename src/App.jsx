@@ -187,6 +187,7 @@ export default function CLTVisualizer() {
 
   // Means axis — recompute dynamically based on actual means drawn so far
   const drawnMeans = sim && t > 0 ? sim.means.slice(0, t) : [];
+  const allMeans = sim ? sim.means : [];
   const { xMin: meansXMin, xMax: meansXMax } = drawnMeans.length > 0
     ? computeRange(drawnMeans)
     : { xMin: popXMin, xMax: popXMax / 2 };
