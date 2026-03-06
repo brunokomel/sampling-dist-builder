@@ -340,7 +340,7 @@ export default function CLTVisualizer() {
         </div>
 
         {/* Three plots */}
-        <div style={{ flex: 1, display: 'flex', gap: 12, alignItems: 'stretch', minWidth: 0 }}>
+        <div style={{ flex: 1, display: 'flex', gap: 12, alignItems: 'flex-start', minWidth: 0 }}>
 
           {/* Plot 1: Population */}
           <PlotCard title="① Population" subtitle={distType.charAt(0).toUpperCase() + distType.slice(1)} theme={theme} flex={1}>
