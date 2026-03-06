@@ -454,7 +454,7 @@ export default function CLTVisualizer() {
             </div>
           </div>
 
-          <div style={{ marginTop: 6 }}>
+          <div style={{ marginTop: 6,  display: 'flex' }}>
             <Btn onClick={pickRandom} color="#c27d0a" active={highlightedIdx !== null}
               >
               🎲 Random Sample
@@ -693,8 +693,8 @@ export default function CLTVisualizer() {
                     y={py}
                     width={tileW3}
                     height={Math.max(1, tileH3 * 0.88)}
-                    fill={isHighlighted ? GOLD : STEEL}
-                    opacity={isHighlighted ? 1 : isNewest && !highlightedIdx ? (tokenAnim ? 0.2 : 1) : 0.85}
+                    fill={(isHighlighted || (isNewest && highlightedIdx === null)) ? GOLD : STEEL}
+                    opacity={(isHighlighted || (isNewest && highlightedIdx === null)) ? (tokenAnim && isNewest ? 0.2 : 1) : 0.85}
                     rx={1}
                     style={{ transition: 'opacity 0.3s' }}
                   />
