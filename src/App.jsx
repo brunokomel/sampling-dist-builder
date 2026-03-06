@@ -23,9 +23,39 @@ function randExp(rng, rate = 1) {
   return -Math.log(1 - rng()) / rate;
 }
 
-function generatePopulation(n = 30000, seed = 42) {
+// function generatePopulation(n = 30000, seed = 42) {
+//   const rng = mulberry32(seed);
+//   return Array.from({ length: n }, () => randExp(rng));
+// }
+function generatePopulation(n = 30000, seed = 42, dist = 'exponential') {
   const rng = mulberry32(seed);
-  return Array.from({ length: n }, () => randExp(rng));
+  return Array.from({ length: n }, () => {
+    switch (dist) {
+      case 'uniform':
+        return rng() * 6;
+      case 'normal': {
+        const u1 = rng(), u2 = rng();
+        return Math.abs(3 + Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2));
+      }
+      case 'bimodal': {
+        const u1 = rng(), u2 = rng();
+        const z = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+        return rng() < 0.5 ? Math.abs(1 + z * 0.5) : Math.abs(4 + z * 0.5);
+      }
+      case 'beta': {
+        // Beta(0.5, 0.5) — U-shaped, using Johnk's method
+        const u1 = rng(), u2 = rng();
+        const x = Math.pow(u1, 2), y = Math.pow(u2, 2);
+        return (x / (x + y)) * 6;
+      }
+      case 'skewed': {
+        // Strong right skew via squared exponential
+        return Math.pow(-Math.log(1 - rng()), 0.4) * 2;
+      }
+      default:
+        return -Math.log(1 - rng());
+    }
+  });
 }
 
 function sampleFrom(pop, n, rng) {
@@ -85,11 +115,13 @@ export default function CLTVisualizer() {
   const [n, setN] = useState(30);
   const [T, setT] = useState(300);
   const [binsPop, setBinsPop] = useState(40);
+  const [distType, setDistType] = useState('exponential');
   const [binsMeans, setBinsMeans] = useState(35);
   const [t, setT_val] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState(350);
   const [highlightedIdx, setHighlightedIdx] = useState(null);
+  
 
   function pickRandom() {
     if (stackedAll.length === 0) return;
@@ -104,11 +136,13 @@ export default function CLTVisualizer() {
   const plot2Ref = useRef(null);
   const plot3Ref = useRef(null);
 
-  const population = useRef(generatePopulation());
+  // const population = useRef(generatePopulation());
+  const population = useRef(generatePopulation(30000, 42, distType));
   const simRef = useRef(null);
 
   // Regenerate sim when T or n changes
   useEffect(() => {
+    population.current = generatePopulation(30000, 42, distType);
     const rng = mulberry32(999 + n * 7 + T * 3);
     const pop = population.current;
     const samples = Array.from({ length: T }, () => sampleFrom(pop, n, rng));
@@ -116,7 +150,8 @@ export default function CLTVisualizer() {
     simRef.current = { samples, means };
     setT_val(0);
     setPlaying(false);
-  }, [n, T]);
+    setHighlightedIdx(null);
+  }, [distType]);
 
   // Playback
   useEffect(() => {
@@ -375,6 +410,43 @@ export default function CLTVisualizer() {
             fontSize: 11,
           }}
         >
+          <div style={{ marginBottom: 14 }}>
+            <div style={{ color: '#94a3b8', fontSize: 10, marginBottom: 6 }}>
+              Population Distribution
+            </div>
+            {[
+              { key: 'exponential', label: '📉 Exponential' },
+              { key: 'uniform',     label: '▬  Uniform' },
+              { key: 'normal',      label: '🔔 Normal' },
+              { key: 'bimodal',     label: '🐫 Bimodal' },
+              { key: 'beta',        label: '∪  Beta (U-shaped)' },
+              { key: 'skewed',      label: '📊 Skewed' },
+            ].map(({ key, label }) => (
+              <button
+                key={key}
+                onClick={() => setDistType(key)}
+                style={{
+                  display: 'block',
+                  width: '100%',
+                  marginBottom: 4,
+                  padding: '5px 8px',
+                  fontSize: 10,
+                  cursor: 'pointer',
+                  background: distType === key ? GOLD : '#334155',
+                  color: distType === key ? '#0f172a' : '#e2e8f0',
+                  border: 'none',
+                  borderRadius: 5,
+                  fontFamily: "'Courier New', monospace",
+                  fontWeight: distType === key ? 700 : 400,
+                  textAlign: 'left',
+                }}
+              >
+                {label}
+              </button>
+            ))}
+            <hr style={{ borderColor: '#334155', marginTop: 10 }} />
+          </div>
+          
           <ControlSlider
             label="Sample size (n)"
             value={n}
