@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import './index.css';
 
-// --- Seeded RNG (Mulberry32) ---
 function mulberry32(seed) {
   return function () {
     seed |= 0;
@@ -16,30 +15,23 @@ function generatePopulation(n = 30000, seed = 42, dist = 'exponential') {
   const rng = mulberry32(seed);
   return Array.from({ length: n }, () => {
     switch (dist) {
-      case 'uniform':
-        return rng() * 6;
+      case 'uniform': return rng() * 6;
       case 'normal': {
-        const u1 = Math.max(1e-10, rng());
-        const u2 = rng();
+        const u1 = Math.max(1e-10, rng()), u2 = rng();
         return 3 + Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
       }
       case 'bimodal': {
-        const u1 = Math.max(1e-10, rng());
-        const u2 = rng();
+        const u1 = Math.max(1e-10, rng()), u2 = rng();
         const z = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
         return rng() < 0.5 ? 1.5 + z * 0.6 : 4.5 + z * 0.6;
       }
       case 'beta': {
-        const u1 = Math.max(1e-10, rng());
-        const u2 = Math.max(1e-10, rng());
-        const x = Math.pow(u1, 2);
-        const y = Math.pow(u2, 2);
+        const u1 = Math.max(1e-10, rng()), u2 = Math.max(1e-10, rng());
+        const x = Math.pow(u1, 2), y = Math.pow(u2, 2);
         return (x / (x + y)) * 6;
       }
-      case 'skewed':
-        return Math.pow(-Math.log(1 - Math.min(rng(), 0.9999)), 0.4) * 2;
-      default:
-        return -Math.log(1 - Math.min(rng(), 0.9999));
+      case 'skewed': return Math.pow(-Math.log(1 - Math.min(rng(), 0.9999)), 0.4) * 2;
+      default: return -Math.log(1 - Math.min(rng(), 0.9999));
     }
   });
 }
@@ -172,7 +164,6 @@ export default function CLTVisualizer() {
 
   const sim = simRef.current;
 
-  // Layout — W for plots 1 & 2, W3 for the wider plot 3
   const W = 340, H = 280, W3 = 340;
   const padL = 36, padR = 10, padT = 28, padB = 36;
   const innerW = W - padL - padR;
@@ -211,7 +202,6 @@ export default function CLTVisualizer() {
     setHighlightedIdx(Math.floor(Math.random() * stackedAll.length));
   }
 
-  // renderAxes accepts an optional width parameter (defaults to W)
   function renderAxes(xMin, xMax, yMax, w = W) {
     const ticks = 5;
     return (
@@ -249,7 +239,7 @@ export default function CLTVisualizer() {
       position: 'relative',
     }}>
 
-      {/* Dark/Light mode toggle — top right */}
+      {/* Theme toggle — top right */}
       <button
         onClick={() => setDarkMode(d => !d)}
         className="theme-toggle"
@@ -277,70 +267,10 @@ export default function CLTVisualizer() {
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: 16, maxWidth: 1200, margin: '0 auto' }}>
-        {/* Controls */}
-        <div style={{
-          width: 200, flexShrink: 0, background: theme.controls,
-          border: `1px solid ${theme.border}`, borderRadius: 10, padding: '16px 14px', fontSize: 11,
-        }}>
-          <div style={{ marginBottom: 14 }}>
-            <div style={{ color: theme.subtext, fontSize: 10, marginBottom: 6 }}>Population Distribution</div>
-            <select
-              value={distType}
-              onChange={(e) => setDistType(e.target.value)}
-              style={{
-                width: '100%', padding: '6px 8px', fontSize: 10,
-                background: theme.select, color: theme.text,
-                border: `1px solid ${theme.border}`,
-                borderRadius: 5, fontFamily: "'Courier New', monospace", cursor: 'pointer',
-              }}
-            >
-              <option value="exponential">📉 Exponential</option>
-              <option value="uniform">▬ Uniform</option>
-              <option value="normal">🔔 Normal</option>
-              <option value="bimodal">🐫 Bimodal</option>
-              <option value="beta">∪ Beta (U-shaped)</option>
-              <option value="skewed">📊 Skewed</option>
-            </select>
-            <hr style={{ borderColor: theme.border, marginTop: 10 }} />
-          </div>
-
-          <ControlSlider label="Sample size (n)" value={n} min={2} max={1000} onChange={setN} theme={theme} />
-          <ControlSlider label="Num. samples (T)" value={T} min={20} max={1000} step={10} onChange={setT} theme={theme} />
-          <ControlSlider label="Pop. bins" value={binsPop} min={10} max={60} onChange={setBinsPop} theme={theme} />
-          <ControlSlider label="Mean bins" value={binsMeans} min={10} max={60} onChange={setBinsMeans} theme={theme} />
-          <ControlSlider label="Delay (ms)" value={speed} min={30} max={600} step={10} onChange={setSpeed} theme={theme} />
-
-          <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <div style={{ display: 'flex', gap: 6 }}>
-              <Btn onClick={() => setPlaying(true)} active={playing} color="#f59e0b">▶ Play</Btn>
-              <Btn onClick={() => setPlaying(false)} color="#64748b">⏸ Pause</Btn>
-            </div>
-            <div style={{ display: 'flex', gap: 6 }}>
-              <Btn onClick={() => { setPlaying(false); setT_val(0); setHighlightedIdx(null); }} color="#475569">
-                ↺ Reset
-              </Btn>
-              <Btn onClick={() => setT_val((p) => Math.min(p + 1, T))} color="#334155">+1 Step</Btn>
-            </div>
-          </div>
-
-          <div style={{ marginTop: 6, display: 'flex' }}>
-            <Btn onClick={pickRandom} color="#c27d0a" active={highlightedIdx !== null}>
-              🎲 Random Sample
-            </Btn>
-          </div>
-
-          <div style={{ marginTop: 14, borderTop: `1px solid ${theme.border}`, paddingTop: 10, color: theme.subtext, lineHeight: 1.6 }}>
-            <div style={{ color: GOLD, marginBottom: 4 }}>● Sample drawn: {t}/{T}</div>
-            {sampleMean != null && (
-              <div>● Current mean: <span style={{ color: GOLD }}>{sampleMean.toFixed(3)}</span></div>
-            )}
-            {t > 0 && <div>● True mean ≈ {mean(pop).toFixed(3)}</div>}
-          </div>
-        </div>
+      <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 16 }}>
 
         {/* Three plots */}
-        <div style={{ flex: 1, display: 'flex', gap: 12, alignItems: 'flex-start', minWidth: 0 }}>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
 
           {/* Plot 1: Population */}
           <PlotCard title="① Population" subtitle={distType.charAt(0).toUpperCase() + distType.slice(1)} theme={theme} flex={1}>
@@ -368,8 +298,7 @@ export default function CLTVisualizer() {
           <PlotCard
             title="② One Sample Draw"
             subtitle={t > 0 ? `Sample #${t} · n=${n} · mean=${sampleMean?.toFixed(3)}` : 'Press Play or Step'}
-            theme={theme}
-            flex={1}
+            theme={theme} flex={1}
           >
             <svg ref={plot2Ref} viewBox={`0 0 ${W} ${H}`} width="100%" height="auto" style={{ overflow: 'visible' }}>
               <defs>
@@ -424,7 +353,7 @@ export default function CLTVisualizer() {
             </svg>
           </PlotCard>
 
-          {/* Plot 3: Sampling Distribution — wider flex, wider viewBox */}
+          {/* Plot 3: Sampling Distribution */}
           <PlotCard
             flex={1}
             title="③ Sampling Distribution"
@@ -459,6 +388,84 @@ export default function CLTVisualizer() {
               <text x={W3 / 2} y={H - 4} textAnchor="middle" fontSize={9} fill={theme.subtext}>Sample Mean</text>
             </svg>
           </PlotCard>
+        </div>
+
+        {/* Controls — horizontal bar below plots */}
+        <div style={{
+          background: theme.controls,
+          border: `1px solid ${theme.border}`,
+          borderRadius: 10,
+          padding: '14px 20px',
+          display: 'flex',
+          gap: 20,
+          alignItems: 'flex-start',
+          flexWrap: 'wrap',
+        }}>
+
+          {/* Distribution picker */}
+          <div style={{ minWidth: 150 }}>
+            <div style={{ color: theme.subtext, fontSize: 10, marginBottom: 6 }}>Population Distribution</div>
+            <select
+              value={distType}
+              onChange={(e) => setDistType(e.target.value)}
+              style={{
+                width: '100%', padding: '6px 8px', fontSize: 10,
+                background: theme.select, color: theme.text,
+                border: `1px solid ${theme.border}`,
+                borderRadius: 5, fontFamily: "'Courier New', monospace", cursor: 'pointer',
+              }}
+            >
+              <option value="exponential">📉 Exponential</option>
+              <option value="uniform">▬ Uniform</option>
+              <option value="normal">🔔 Normal</option>
+              <option value="bimodal">🐫 Bimodal</option>
+              <option value="beta">∪ Beta (U-shaped)</option>
+              <option value="skewed">📊 Skewed</option>
+            </select>
+          </div>
+
+          {/* Divider */}
+          <div style={{ width: 1, alignSelf: 'stretch', background: theme.border }} />
+
+          {/* Sliders in a grid */}
+          <div style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '0 20px', minWidth: 400 }}>
+            <ControlSlider label="Sample size (n)" value={n} min={2} max={1000} onChange={setN} theme={theme} />
+            <ControlSlider label="Num. samples (T)" value={T} min={20} max={1000} step={10} onChange={setT} theme={theme} />
+            <ControlSlider label="Pop. bins" value={binsPop} min={10} max={60} onChange={setBinsPop} theme={theme} />
+            <ControlSlider label="Mean bins" value={binsMeans} min={10} max={60} onChange={setBinsMeans} theme={theme} />
+            <ControlSlider label="Delay (ms)" value={speed} min={30} max={600} step={10} onChange={setSpeed} theme={theme} />
+          </div>
+
+          {/* Divider */}
+          <div style={{ width: 1, alignSelf: 'stretch', background: theme.border }} />
+
+          {/* Buttons */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, minWidth: 150 }}>
+            <div style={{ display: 'flex', gap: 6 }}>
+              <Btn onClick={() => setPlaying(true)} active={playing} color="#f59e0b">▶ Play</Btn>
+              <Btn onClick={() => setPlaying(false)} color="#64748b">⏸ Pause</Btn>
+            </div>
+            <div style={{ display: 'flex', gap: 6 }}>
+              <Btn onClick={() => { setPlaying(false); setT_val(0); setHighlightedIdx(null); }} color="#475569">↺ Reset</Btn>
+              <Btn onClick={() => setT_val((p) => Math.min(p + 1, T))} color="#334155">+1 Step</Btn>
+            </div>
+            <div style={{ display: 'flex' }}>
+              <Btn onClick={pickRandom} color="#c27d0a" active={highlightedIdx !== null}>🎲 Random Sample</Btn>
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div style={{ width: 1, alignSelf: 'stretch', background: theme.border }} />
+
+          {/* Stats */}
+          <div style={{ fontSize: 11, color: theme.subtext, lineHeight: 2, minWidth: 130 }}>
+            <div style={{ color: GOLD }}>● Sample drawn: {t}/{T}</div>
+            {sampleMean != null && (
+              <div>● Mean: <span style={{ color: GOLD }}>{sampleMean.toFixed(3)}</span></div>
+            )}
+            {t > 0 && <div>● True mean ≈ {mean(pop).toFixed(3)}</div>}
+          </div>
+
         </div>
       </div>
 
