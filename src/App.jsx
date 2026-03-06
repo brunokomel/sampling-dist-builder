@@ -187,12 +187,9 @@ export default function CLTVisualizer() {
 
   // Means axis — recompute dynamically based on actual means drawn so far
   const drawnMeans = sim && t > 0 ? sim.means.slice(0, t) : [];
-  const { xMin: meansXMin, xMax: meansXMax } = useMemo(() => {
-    if (drawnMeans.length === 0) {
-      return { xMin: popXMin, xMax: popXMax / 2 };
-    }
-    return computeRange(drawnMeans);
-  }, [drawnMeans.length > 0 ? Math.floor(drawnMeans.length / 20) : 0, popXMin, popXMax]);
+  const { xMin: meansXMin, xMax: meansXMax } = drawnMeans.length > 0
+    ? computeRange(drawnMeans)
+    : { xMin: popXMin, xMax: popXMax / 2 };
 
   // Stacked means
   const stackedAll = drawnMeans.length > 0
