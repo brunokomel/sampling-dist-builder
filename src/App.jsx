@@ -197,8 +197,9 @@ export default function CLTVisualizer() {
   const innerH = H - padT - padB;
 
   // Population histogram
-  const popXMin = 0,
-    popXMax = 8;
+  const sorted = [...pop].sort((a, b) => a - b);
+  const popXMin = 0;
+  const popXMax = sorted[Math.floor(sorted.length * 0.98)] * 1.1;
   const popHist = makeHistogram(pop, binsPop, popXMin, popXMax);
   const popDensityMax = Math.max(...popHist.map((b) => b.density)) * 1.1;
 
@@ -215,8 +216,8 @@ export default function CLTVisualizer() {
     : [];
 
   // Stacked means
-  const meansXMin = 0,
-    meansXMax = 4;
+  const meansXMin = popXMin;
+  const meansXMax = popXMax / 2;
   const stackedAll =
     sim && t > 0
       ? stackMeans(sim.means.slice(0, t), binsMeans, meansXMin, meansXMax)
@@ -558,6 +559,7 @@ export default function CLTVisualizer() {
             display: 'flex',
             gap: 12,
             alignItems: 'flex-start',
+            overflowX: 'auto',
           }}
         >
           {/* Plot 1: Population */}
@@ -902,7 +904,9 @@ function PlotCard({ title, subtitle, children }) {
   return (
     <div
       style={{
-        flex: 1,
+        width: 340, 
+        flexShrink: 0, 
+        // flex: 1,
         background: '#0f172a',
         border: '1px solid #1e293b',
         borderRadius: 8,
