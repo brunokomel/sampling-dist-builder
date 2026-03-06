@@ -429,8 +429,8 @@ export default function CLTVisualizer() {
 
           {/* Sliders in a grid */}
           <div style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '0 20px', minWidth: 400 }}>
-            <ControlSlider label="Sample size (n)" value={n} min={2} max={1000} onChange={setN} theme={theme} />
-            <ControlSlider label="Num. samples (T)" value={T} min={20} max={1000} step={10} onChange={setT} theme={theme} />
+            <ControlSlider label="Sample size" value={n} min={2} max={1000} onChange={setN} theme={theme} />
+            <ControlSlider label="Num. samples" value={T} min={20} max={1000} step={10} onChange={setT} theme={theme} />
             <ControlSlider label="Pop. bins" value={binsPop} min={10} max={60} onChange={setBinsPop} theme={theme} />
             <ControlSlider label="Mean bins" value={binsMeans} min={10} max={60} onChange={setBinsMeans} theme={theme} />
             <ControlSlider label="Delay (ms)" value={speed} min={30} max={600} step={10} onChange={setSpeed} theme={theme} />
