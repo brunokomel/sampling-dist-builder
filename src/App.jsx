@@ -75,6 +75,13 @@ function scaleY(val, yMax, height, padT, padB) {
   return padT + (1 - val / yMax) * (height - padT - padB);
 }
 
+// --- Random Sample Mean
+function pickRandom() {
+  if (stackedAll.length === 0) return;
+  const idx = Math.floor(Math.random() * stackedAll.length);
+  setHighlightedIdx(idx);
+}
+
 const POP_COLOR = '#334155';
 const SAMPLE_COLOR = '#94a3b8';
 const GOLD = '#f59e0b';
@@ -89,6 +96,7 @@ export default function CLTVisualizer() {
   const [t, setT_val] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState(350);
+  const [highlightedIdx, setHighlightedIdx] = useState(null);
 
   // Animation state for the "drop" token
   const [tokenAnim, setTokenAnim] = useState(null); // {phase: 'compress'|'fly'|'drop'|null, ...}
@@ -429,11 +437,12 @@ export default function CLTVisualizer() {
             </div>
             <div style={{ display: 'flex', gap: 6 }}>
               <Btn
-                onClick={() => {
-                  setPlaying(false);
-                  setT_val(0);
-                }}
-                color="#475569"
+                  onClick={() => {
+                    setPlaying(false);
+                    setT_val(0);
+                    setHighlightedIdx(null);
+                  }}
+                  color="#475569"
               >
                 ↺ Reset
               </Btn>
@@ -445,6 +454,15 @@ export default function CLTVisualizer() {
               </Btn>
             </div>
           </div>
+
+          <div style={{ marginTop: 6 }}>
+            <Btn onClick={pickRandom} color="#92400e" active={highlightedIdx !== null}
+              >
+              🎲 Highlight Random
+            </Btn>
+          </div>
+
+          
 
           <div
             style={{
@@ -675,8 +693,8 @@ export default function CLTVisualizer() {
                     y={py}
                     width={tileW3}
                     height={Math.max(1, tileH3 * 0.88)}
-                    fill={isNewest ? GOLD : STEEL}
-                    opacity={isNewest ? (tokenAnim ? 0.2 : 1) : 0.85}
+                    fill={isHighlighted ? GOLD : isNewest ? GOLD : STEEL}
+                    opacity={isHighlighted ? 1 : isNewest ? (tokenAnim ? 0.2 : 1) : 0.85}
                     rx={1}
                     style={{ transition: 'opacity 0.3s' }}
                   />
