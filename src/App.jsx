@@ -151,7 +151,7 @@ export default function CLTVisualizer() {
     setT_val(0);
     setPlaying(false);
     setHighlightedIdx(null);
-  }, [distType]);
+  }, [n, T, distType]);
 
   // Playback
   useEffect(() => {
@@ -414,36 +414,29 @@ export default function CLTVisualizer() {
             <div style={{ color: '#94a3b8', fontSize: 10, marginBottom: 6 }}>
               Population Distribution
             </div>
-            {[
-              { key: 'exponential', label: '📉 Exponential' },
-              { key: 'uniform',     label: '▬  Uniform' },
-              { key: 'normal',      label: '🔔 Normal' },
-              { key: 'bimodal',     label: '🐫 Bimodal' },
-              { key: 'beta',        label: '∪  Beta (U-shaped)' },
-              { key: 'skewed',      label: '📊 Skewed' },
-            ].map(({ key, label }) => (
-              <button
-                key={key}
-                onClick={() => setDistType(key)}
-                style={{
-                  display: 'block',
-                  width: '100%',
-                  marginBottom: 4,
-                  padding: '5px 8px',
-                  fontSize: 10,
-                  cursor: 'pointer',
-                  background: distType === key ? GOLD : '#334155',
-                  color: distType === key ? '#0f172a' : '#e2e8f0',
-                  border: 'none',
-                  borderRadius: 5,
-                  fontFamily: "'Courier New', monospace",
-                  fontWeight: distType === key ? 700 : 400,
-                  textAlign: 'left',
-                }}
-              >
-                {label}
-              </button>
-            ))}
+            <select
+              value={distType}
+              onChange={(e) => setDistType(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '6px 8px',
+                fontSize: 10,
+                background: '#334155',
+                color: '#e2e8f0',
+                border: '1px solid #475569',
+                borderRadius: 5,
+                fontFamily: "'Courier New', monospace",
+                cursor: 'pointer',
+                accentColor: GOLD,
+              }}
+            >
+              <option value="exponential">📉 Exponential</option>
+              <option value="uniform">▬ Uniform</option>
+              <option value="normal">🔔 Normal</option>
+              <option value="bimodal">🐫 Bimodal</option>
+              <option value="beta">∪ Beta (U-shaped)</option>
+              <option value="skewed">📊 Skewed</option>
+            </select>
             <hr style={{ borderColor: '#334155', marginTop: 10 }} />
           </div>
           
