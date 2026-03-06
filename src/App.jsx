@@ -291,8 +291,8 @@ export default function CLTVisualizer() {
             <hr style={{ borderColor: '#334155', marginTop: 10 }} />
           </div>
 
-          <ControlSlider label="Sample size (n)" value={n} min={2} max={100} onChange={setN} />
-          <ControlSlider label="Num. samples (T)" value={T} min={20} max={500} step={10} onChange={setT} />
+          <ControlSlider label="Sample size (n)" value={n} min={2} max={1000} onChange={setN} />
+          <ControlSlider label="Num. samples (T)" value={T} min={20} max={5000} step={10} onChange={setT} />
           <ControlSlider label="Pop. bins" value={binsPop} min={10} max={60} onChange={setBinsPop} />
           <ControlSlider label="Mean bins" value={binsMeans} min={10} max={60} onChange={setBinsMeans} />
           <ControlSlider label="Delay (ms)" value={speed} min={30} max={600} step={10} onChange={setSpeed} />
