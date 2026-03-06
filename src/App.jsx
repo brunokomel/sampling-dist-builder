@@ -406,7 +406,8 @@ export default function CLTVisualizer() {
           </PlotCard>
 
           {/* Plot 3: Sampling Distribution */}
-          <PlotCard
+          <PlotCard 
+            flex={1.5}
             title="③ Sampling Distribution of Means"
             subtitle={t > 0 ? `${t} means stacked · Gold = Newest` : 'Means will stack here'}
           >
@@ -498,7 +499,7 @@ export default function CLTVisualizer() {
   );
 }
 
-function PlotCard({ title, subtitle, children }) {
+function PlotCard({ title, subtitle, children, flex = 1  }) {
   return (
     <div style={{ flex: 1, minWidth: 0, background: '#0f172a', border: '1px solid #1e293b', borderRadius: 8, padding: '10px 8px 6px' }}>
       <div style={{ fontSize: 18, fontWeight: 700, color: '#f1f5f9', marginBottom: 1 }}>{title}</div>
