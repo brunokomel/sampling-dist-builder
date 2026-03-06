@@ -408,7 +408,7 @@ export default function CLTVisualizer() {
           {/* Plot 3: Sampling Distribution */}
           <PlotCard 
             flex={1.5}
-            title="③ Sampling Distribution of Means"
+            title="③ Sampling Distribution"
             subtitle={t > 0 ? `${t} means stacked · Gold = Newest` : 'Means will stack here'}
           >
             <svg ref={plot3Ref} viewBox={`0 0 ${W} ${H}`} width="100%" height="auto" style={{ overflow: 'visible' }}>
