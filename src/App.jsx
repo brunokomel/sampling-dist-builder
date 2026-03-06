@@ -88,7 +88,6 @@ function scaleY(val, yMax, height, padT, padB) {
   return padT + (1 - val / yMax) * (height - padT - padB);
 }
 
-// Compute axis range from data using percentiles
 function computeRange(data) {
   const sorted = [...data].sort((a, b) => a - b);
   const xMin = sorted[Math.floor(sorted.length * 0.005)];
@@ -97,8 +96,6 @@ function computeRange(data) {
   return { xMin: Math.max(0, xMin - pad), xMax: xMax + pad };
 }
 
-const POP_COLOR = '#334155';
-const SAMPLE_COLOR = '#94a3b8';
 const GOLD = '#f59e0b';
 const GOLD_DARK = '#92400e';
 const STEEL = '#3b82f6';
@@ -114,19 +111,31 @@ export default function CLTVisualizer() {
   const [speed, setSpeed] = useState(350);
   const [highlightedIdx, setHighlightedIdx] = useState(null);
   const [tokenAnim, setTokenAnim] = useState(null);
+  const [darkMode, setDarkMode] = useState(true);
+
   const animRef = useRef(null);
   const prevT = useRef(0);
   const plot2Ref = useRef(null);
   const plot3Ref = useRef(null);
   const simRef = useRef(null);
 
-  // Recompute population whenever distType changes
-  const pop = useMemo(() => generatePopulation(30000, 42, distType), [distType]);
+  const theme = {
+    bg:       darkMode ? '#1C2739' : '#f0f4f8',
+    panel:    darkMode ? '#0f172a' : '#ffffff',
+    controls: darkMode ? '#1e293b' : '#e2e8f0',
+    border:   darkMode ? '#334155' : '#cbd5e1',
+    text:     darkMode ? '#e2e8f0' : '#1e293b',
+    subtext:  darkMode ? '#64748b' : '#64748b',
+    axis:     darkMode ? '#475569' : '#94a3b8',
+    tick:     darkMode ? '#94a3b8' : '#475569',
+    popBar:   darkMode ? '#334155' : '#94a3b8',
+    select:   darkMode ? '#334155' : '#ffffff',
+    sampleBar: darkMode ? '#94a3b8' : '#475569',
+  };
 
-  // Recompute axis range whenever population changes
+  const pop = useMemo(() => generatePopulation(30000, 42, distType), [distType]);
   const { xMin: popXMin, xMax: popXMax } = useMemo(() => computeRange(pop), [pop]);
 
-  // Regenerate sim when n, T, or distType changes
   useEffect(() => {
     const rng = mulberry32(999 + n * 7 + T * 3);
     const samples = Array.from({ length: T }, () => sampleFrom(pop, n, rng));
@@ -137,7 +146,6 @@ export default function CLTVisualizer() {
     setHighlightedIdx(null);
   }, [n, T, pop]);
 
-  // Playback
   useEffect(() => {
     if (!playing) return;
     const id = setInterval(() => {
@@ -149,7 +157,6 @@ export default function CLTVisualizer() {
     return () => clearInterval(id);
   }, [playing, speed, T]);
 
-  // Trigger token animation on new sample
   useEffect(() => {
     if (t > 0 && t > prevT.current && simRef.current) {
       setHighlightedIdx(null);
@@ -165,36 +172,30 @@ export default function CLTVisualizer() {
 
   const sim = simRef.current;
 
-  // Layout constants
   const W = 340, H = 280;
   const padL = 36, padR = 10, padT = 28, padB = 36;
   const innerW = W - padL - padR;
   const innerH = H - padT - padB;
 
-  // Population histogram
   const popHist = useMemo(
     () => makeHistogram(pop, binsPop, popXMin, popXMax),
     [pop, binsPop, popXMin, popXMax]
   );
   const popDensityMax = Math.max(...popHist.map((b) => b.density)) * 1.1;
 
-  // Current sample
   const sampleVals = t > 0 && sim ? sim.samples[t - 1] : [];
   const sampleMean = sampleVals.length ? mean(sampleVals) : null;
   const sampleHist = sampleVals.length
     ? makeHistogram(sampleVals, Math.max(8, Math.floor(binsPop / 2)), popXMin, popXMax)
     : [];
 
-  // Means axis — recompute dynamically based on actual means drawn so far
   const drawnMeans = sim && t > 0 ? sim.means.slice(0, t) : [];
-  const allMeans = sim ? sim.means : [];
   const popMean = mean(pop);
   const popStd = Math.sqrt(mean(pop.map(x => Math.pow(x - popMean, 2))));
   const seMean = popStd / Math.sqrt(n);
   const meansXMin = Math.max(popXMin, popMean - 4 * seMean);
   const meansXMax = Math.min(popXMax, popMean + 4 * seMean);
 
-  // Stacked means
   const stackedAll = drawnMeans.length > 0
     ? stackMeans(drawnMeans, binsMeans, meansXMin, meansXMax)
     : [];
@@ -208,25 +209,19 @@ export default function CLTVisualizer() {
     setHighlightedIdx(Math.floor(Math.random() * stackedAll.length));
   }
 
-  // Flying token source/dest
-  const plot3DestX = newest ? scaleX(newest.x, meansXMin, meansXMax, W, padL) : W / 2;
-  const plot3DestY = newest ? padT + innerH - newest.stack * tileH3 + tileH3 * 0.08 : H / 2;
-
   function renderAxes(xMin, xMax, yMax) {
     const ticks = 5;
     return (
       <>
-        <line x1={padL} y1={H - padB} x2={W - padR} y2={H - padB} stroke="#475569" strokeWidth={1} />
-        <line x1={padL} y1={padT} x2={padL} y2={H - padB} stroke="#475569" strokeWidth={1} />
+        <line x1={padL} y1={H - padB} x2={W - padR} y2={H - padB} stroke={theme.axis} strokeWidth={1} />
+        <line x1={padL} y1={padT} x2={padL} y2={H - padB} stroke={theme.axis} strokeWidth={1} />
         {Array.from({ length: ticks + 1 }, (_, i) => {
           const v = xMin + (i / ticks) * (xMax - xMin);
           const px = scaleX(v, xMin, xMax, W, padL);
           return (
             <g key={i}>
-              <line x1={px} y1={H - padB} x2={px} y2={H - padB + 4} stroke="#475569" strokeWidth={1} />
-              <text x={px} y={H - padB + 14} textAnchor="middle" fontSize={9} fill="#94a3b8">
-                {v.toFixed(1)}
-              </text>
+              <line x1={px} y1={H - padB} x2={px} y2={H - padB + 4} stroke={theme.axis} strokeWidth={1} />
+              <text x={px} y={H - padB + 14} textAnchor="middle" fontSize={9} fill={theme.tick}>{v.toFixed(1)}</text>
             </g>
           );
         })}
@@ -235,10 +230,8 @@ export default function CLTVisualizer() {
           const py = scaleY(v, yMax, H, padT, padB);
           return (
             <g key={i}>
-              <line x1={padL - 3} y1={py} x2={padL} y2={py} stroke="#475569" strokeWidth={1} />
-              <text x={padL - 5} y={py + 3} textAnchor="end" fontSize={8} fill="#94a3b8">
-                {v.toFixed(2)}
-              </text>
+              <line x1={padL - 3} y1={py} x2={padL} y2={py} stroke={theme.axis} strokeWidth={1} />
+              <text x={padL - 5} y={py + 3} textAnchor="end" fontSize={8} fill={theme.tick}>{v.toFixed(2)}</text>
             </g>
           );
         })}
@@ -249,17 +242,34 @@ export default function CLTVisualizer() {
   return (
     <div style={{
       width: '100%', minHeight: '100vh', padding: '24px 16px',
-      background: '#1C2739', fontFamily: "'Courier New', monospace", color: '#e2e8f0',
+      background: theme.bg, fontFamily: "'Courier New', monospace", color: theme.text,
+      position: 'relative',
     }}>
+
+      {/* Dark/Light mode toggle — top right */}
+      <button
+        onClick={() => setDarkMode(d => !d)}
+        style={{
+          position: 'absolute', top: 20, right: 20,
+          padding: '6px 14px', fontSize: 11, cursor: 'pointer',
+          background: darkMode ? '#334155' : '#cbd5e1',
+          color: theme.text, border: `1px solid ${theme.border}`,
+          borderRadius: 6, fontFamily: "'Courier New', monospace",
+          fontWeight: 600, zIndex: 10,
+        }}
+      >
+        {darkMode ? '☀️ Light Mode' : '🌙 Dark Mode'}
+      </button>
+
       {/* Title */}
       <div style={{ textAlign: 'center', marginBottom: 20 }}>
-        <div style={{ fontSize: 11, letterSpacing: 6, color: '#f59e0b', textTransform: 'uppercase', marginBottom: 4 }}>
+        <div style={{ fontSize: 11, letterSpacing: 6, color: GOLD, textTransform: 'uppercase', marginBottom: 4 }}>
           Central Limit Theorem
         </div>
-        <div style={{ fontSize: 22, fontWeight: 700, color: '#f1f5f9', letterSpacing: 1 }}>
+        <div style={{ fontSize: 22, fontWeight: 700, color: theme.text, letterSpacing: 1 }}>
           Sampling Distribution Builder
         </div>
-        <div style={{ fontSize: 11, color: '#64748b', marginTop: 3 }}>
+        <div style={{ fontSize: 11, color: theme.subtext, marginTop: 3 }}>
           Watch each sample mean compress into a gold token and drop into the distribution
         </div>
       </div>
@@ -267,17 +277,18 @@ export default function CLTVisualizer() {
       <div style={{ display: 'flex', gap: 16, maxWidth: 1200, margin: '0 auto' }}>
         {/* Controls */}
         <div style={{
-          width: 200, flexShrink: 0, background: '#1e293b',
-          border: '1px solid #334155', borderRadius: 10, padding: '16px 14px', fontSize: 11,
+          width: 200, flexShrink: 0, background: theme.controls,
+          border: `1px solid ${theme.border}`, borderRadius: 10, padding: '16px 14px', fontSize: 11,
         }}>
           <div style={{ marginBottom: 14 }}>
-            <div style={{ color: '#94a3b8', fontSize: 10, marginBottom: 6 }}>Population Distribution</div>
+            <div style={{ color: theme.subtext, fontSize: 10, marginBottom: 6 }}>Population Distribution</div>
             <select
               value={distType}
               onChange={(e) => setDistType(e.target.value)}
               style={{
                 width: '100%', padding: '6px 8px', fontSize: 10,
-                background: '#334155', color: '#e2e8f0', border: '1px solid #475569',
+                background: theme.select, color: theme.text,
+                border: `1px solid ${theme.border}`,
                 borderRadius: 5, fontFamily: "'Courier New', monospace", cursor: 'pointer',
               }}
             >
@@ -288,14 +299,14 @@ export default function CLTVisualizer() {
               <option value="beta">∪ Beta (U-shaped)</option>
               <option value="skewed">📊 Skewed</option>
             </select>
-            <hr style={{ borderColor: '#334155', marginTop: 10 }} />
+            <hr style={{ borderColor: theme.border, marginTop: 10 }} />
           </div>
 
-          <ControlSlider label="Sample size (n)" value={n} min={2} max={1000} onChange={setN} />
-          <ControlSlider label="Num. samples (T)" value={T} min={20} max={1000} step={10} onChange={setT} />
-          <ControlSlider label="Pop. bins" value={binsPop} min={10} max={60} onChange={setBinsPop} />
-          <ControlSlider label="Mean bins" value={binsMeans} min={10} max={60} onChange={setBinsMeans} />
-          <ControlSlider label="Delay (ms)" value={speed} min={30} max={600} step={10} onChange={setSpeed} />
+          <ControlSlider label="Sample size (n)" value={n} min={2} max={1000} onChange={setN} theme={theme} />
+          <ControlSlider label="Num. samples (T)" value={T} min={20} max={1000} step={10} onChange={setT} theme={theme} />
+          <ControlSlider label="Pop. bins" value={binsPop} min={10} max={60} onChange={setBinsPop} theme={theme} />
+          <ControlSlider label="Mean bins" value={binsMeans} min={10} max={60} onChange={setBinsMeans} theme={theme} />
+          <ControlSlider label="Delay (ms)" value={speed} min={30} max={600} step={10} onChange={setSpeed} theme={theme} />
 
           <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 6 }}>
             <div style={{ display: 'flex', gap: 6 }}>
@@ -316,8 +327,8 @@ export default function CLTVisualizer() {
             </Btn>
           </div>
 
-          <div style={{ marginTop: 14, borderTop: '1px solid #334155', paddingTop: 10, color: '#64748b', lineHeight: 1.6 }}>
-            <div style={{ color: '#f59e0b', marginBottom: 4 }}>● Sample drawn: {t}/{T}</div>
+          <div style={{ marginTop: 14, borderTop: `1px solid ${theme.border}`, paddingTop: 10, color: theme.subtext, lineHeight: 1.6 }}>
+            <div style={{ color: GOLD, marginBottom: 4 }}>● Sample drawn: {t}/{T}</div>
             {sampleMean != null && (
               <div>● Current mean: <span style={{ color: GOLD }}>{sampleMean.toFixed(3)}</span></div>
             )}
@@ -329,7 +340,7 @@ export default function CLTVisualizer() {
         <div style={{ flex: 1, display: 'flex', gap: 12, alignItems: 'flex-start', minWidth: 0 }}>
 
           {/* Plot 1: Population */}
-          <PlotCard title="① Population" subtitle={distType.charAt(0).toUpperCase() + distType.slice(1)}>
+          <PlotCard title="① Population" subtitle={distType.charAt(0).toUpperCase() + distType.slice(1)} theme={theme}>
             <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="auto">
               <defs>
                 <clipPath id="clip1">
@@ -341,12 +352,12 @@ export default function CLTVisualizer() {
                   const x = scaleX(b.x0, popXMin, popXMax, W, padL);
                   const x2 = scaleX(b.x1, popXMin, popXMax, W, padL);
                   const y = scaleY(b.density, popDensityMax, H, padT, padB);
-                  return <rect key={i} x={x + 0.5} y={y} width={Math.max(1, x2 - x - 1)} height={H - padB - y} fill={POP_COLOR} opacity={0.9} />;
+                  return <rect key={i} x={x + 0.5} y={y} width={Math.max(1, x2 - x - 1)} height={H - padB - y} fill={theme.popBar} opacity={0.9} />;
                 })}
               </g>
               {renderAxes(popXMin, popXMax, popDensityMax)}
-              <text x={W / 2} y={H - 4} textAnchor="middle" fontSize={9} fill="#64748b">Y</text>
-              <text x={12} y={H / 2} textAnchor="middle" fontSize={9} fill="#64748b" transform={`rotate(-90,12,${H / 2})`}>Density</text>
+              <text x={W / 2} y={H - 4} textAnchor="middle" fontSize={9} fill={theme.subtext}>Y</text>
+              <text x={12} y={H / 2} textAnchor="middle" fontSize={9} fill={theme.subtext} transform={`rotate(-90,12,${H / 2})`}>Density</text>
             </svg>
           </PlotCard>
 
@@ -354,6 +365,7 @@ export default function CLTVisualizer() {
           <PlotCard
             title="② One Sample Draw"
             subtitle={t > 0 ? `Sample #${t} · n=${n} · mean=${sampleMean?.toFixed(3)}` : 'Press Play or Step'}
+            theme={theme}
           >
             <svg ref={plot2Ref} viewBox={`0 0 ${W} ${H}`} width="100%" height="auto" style={{ overflow: 'visible' }}>
               <defs>
@@ -369,13 +381,13 @@ export default function CLTVisualizer() {
                   const x = scaleX(b.x0, popXMin, popXMax, W, padL);
                   const x2 = scaleX(b.x1, popXMin, popXMax, W, padL);
                   const y = scaleY(b.density, popDensityMax, H, padT, padB);
-                  return <rect key={i} x={x + 0.5} y={y} width={Math.max(1, x2 - x - 1)} height={H - padB - y} fill={POP_COLOR} opacity={0.35} />;
+                  return <rect key={i} x={x + 0.5} y={y} width={Math.max(1, x2 - x - 1)} height={H - padB - y} fill={theme.popBar} opacity={0.35} />;
                 })}
                 {sampleHist.map((b, i) => {
                   const x = scaleX(b.x0, popXMin, popXMax, W, padL);
                   const x2 = scaleX(b.x1, popXMin, popXMax, W, padL);
                   const y = scaleY(b.density, popDensityMax, H, padT, padB);
-                  return <rect key={i} x={x + 0.5} y={y} width={Math.max(1, x2 - x - 1)} height={H - padB - y} fill={SAMPLE_COLOR} opacity={0.8} />;
+                  return <rect key={i} x={x + 0.5} y={y} width={Math.max(1, x2 - x - 1)} height={H - padB - y} fill={theme.sampleBar} opacity={0.8} />;
                 })}
               </g>
               {renderAxes(popXMin, popXMax, popDensityMax)}
@@ -404,15 +416,16 @@ export default function CLTVisualizer() {
                   />
                 </>
               )}
-              <text x={W / 2} y={H - 4} textAnchor="middle" fontSize={9} fill="#64748b">Y</text>
+              <text x={W / 2} y={H - 4} textAnchor="middle" fontSize={9} fill={theme.subtext}>Y</text>
             </svg>
           </PlotCard>
 
           {/* Plot 3: Sampling Distribution */}
-          <PlotCard 
+          <PlotCard
             flex={1.5}
             title="③ Sampling Distribution"
             subtitle={t > 0 ? `${t} means stacked · Gold = Newest` : 'Means will stack here'}
+            theme={theme}
           >
             <svg ref={plot3Ref} viewBox={`0 0 ${W} ${H}`} width="100%" height="auto" style={{ overflow: 'visible' }}>
               <defs>
@@ -439,7 +452,7 @@ export default function CLTVisualizer() {
                 })}
               </g>
               {renderAxes(meansXMin, meansXMax, maxStack + 1)}
-              <text x={W / 2} y={H - 4} textAnchor="middle" fontSize={9} fill="#64748b">Sample Mean</text>
+              <text x={W / 2} y={H - 4} textAnchor="middle" fontSize={9} fill={theme.subtext}>Sample Mean</text>
             </svg>
           </PlotCard>
         </div>
@@ -452,7 +465,6 @@ export default function CLTVisualizer() {
         const r3 = plot3Ref.current?.getBoundingClientRect();
         if (!r2 || !r3) return null;
 
-        // Scale factors because SVG uses viewBox but renders at different pixel size
         const scaleFactorX2 = r2.width / W;
         const scaleFactorX3 = r3.width / W;
         const scaleFactorY2 = r2.height / H;
@@ -490,23 +502,23 @@ export default function CLTVisualizer() {
 
       {/* Frame scrubber */}
       <div style={{ maxWidth: 1200, margin: '14px auto 0', display: 'flex', alignItems: 'center', gap: 12 }}>
-        <span style={{ fontSize: 10, color: '#64748b', minWidth: 60 }}>Frame: {t}</span>
+        <span style={{ fontSize: 10, color: theme.subtext, minWidth: 60 }}>Frame: {t}</span>
         <input
           type="range" min={0} max={T} value={t} step={1}
           onChange={(e) => { setPlaying(false); setT_val(Number(e.target.value)); }}
           style={{ flex: 1, accentColor: GOLD }}
         />
-        <span style={{ fontSize: 10, color: '#64748b', minWidth: 30 }}>{T}</span>
+        <span style={{ fontSize: 10, color: theme.subtext, minWidth: 30 }}>{T}</span>
       </div>
     </div>
   );
 }
 
-function PlotCard({ title, subtitle, children, flex = 1  }) {
+function PlotCard({ title, subtitle, children, flex = 1, theme }) {
   return (
-    <div style={{ flex: 1, minWidth: 0, background: '#0f172a', border: '1px solid #1e293b', borderRadius: 8, padding: '10px 8px 6px' }}>
-      <div style={{ fontSize: 18, fontWeight: 700, color: '#f1f5f9', marginBottom: 1 }}>{title}</div>
-      <div style={{ fontSize: 12, color: '#64748b', marginBottom: 6, minHeight: 12 }}>{subtitle}</div>
+    <div style={{ flex, minWidth: 0, background: theme.panel, border: `1px solid ${theme.border}`, borderRadius: 8, padding: '10px 8px 6px' }}>
+      <div style={{ fontSize: 18, fontWeight: 700, color: theme.text, marginBottom: 1 }}>{title}</div>
+      <div style={{ fontSize: 12, color: theme.subtext, marginBottom: 6, minHeight: 12 }}>{subtitle}</div>
       {children}
     </div>
   );
@@ -516,7 +528,7 @@ function Btn({ onClick, children, color = '#334155', active }) {
   return (
     <button onClick={onClick} style={{
       flex: 1, padding: '5px 0', fontSize: 10, cursor: 'pointer',
-      background: active ? '#f59e0b' : color,
+      background: active ? GOLD : color,
       color: active ? '#0f172a' : '#e2e8f0',
       border: 'none', borderRadius: 5, fontFamily: 'inherit', fontWeight: 600,
     }}>
@@ -525,17 +537,17 @@ function Btn({ onClick, children, color = '#334155', active }) {
   );
 }
 
-function ControlSlider({ label, value, min, max, step = 1, onChange }) {
+function ControlSlider({ label, value, min, max, step = 1, onChange, theme }) {
   return (
     <div style={{ marginBottom: 10 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2, color: '#94a3b8', fontSize: 10 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2, color: theme.subtext, fontSize: 10 }}>
         <span>{label}</span>
-        <span style={{ color: '#f59e0b' }}>{value}</span>
+        <span style={{ color: GOLD }}>{value}</span>
       </div>
       <input
         type="range" min={min} max={max} step={step} value={value}
         onChange={(e) => onChange(Number(e.target.value))}
-        style={{ width: '100%', accentColor: '#f59e0b' }}
+        style={{ width: '100%', accentColor: GOLD }}
       />
     </div>
   );
