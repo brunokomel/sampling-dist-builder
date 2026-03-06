@@ -137,6 +137,7 @@ export default function CLTVisualizer() {
   useEffect(() => {
     if (t > 0 && t > prevT.current && simRef.current) {
       // Start compress animation
+      setHighlightedIdx(null);
       setTokenAnim({ phase: 'compress', t });
       const t1 = setTimeout(() => setTokenAnim({ phase: 'fly', t }), 500);
       const t2 = setTimeout(() => setTokenAnim({ phase: 'drop', t }), 1100);
